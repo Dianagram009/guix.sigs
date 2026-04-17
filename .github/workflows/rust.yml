@@ -2,21 +2,52 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths:
+      - "contrib/touched-files-check/**"
+      - ".github/workflows/rust.yml"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths:
+      - "contrib/touched-files-check/**"
+      - ".github/workflows/rust.yml"
+
+# Cancel superseded runs on the same ref (e.g. when a PR is force-pushed).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+  RUST_BACKTRACE: short
 
 jobs:
-  build:
-
+  test:
+    name: Build & test
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: contrib/touched-files-check
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgpgme-dev pkg-config
+
+      - name: Install Rust toolchain (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry, git, and target
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contrib/touched-files-check
+
+      # `cargo test` compiles the crate as part of running the tests, so a
+      # separate `cargo build` step would duplicate work.
+      - name: Build & run tests
+        run: cargo test --locked
