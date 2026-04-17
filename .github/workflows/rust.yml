@@ -9,13 +9,25 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  contents: read
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: contrib/touched-files-check
+
     steps:
     - uses: actions/checkout@v4
+    - name: install dependencies
+      working-directory: .
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends libgpgme-dev pkgconf
     - name: Build
       run: cargo build --verbose
     - name: Run tests

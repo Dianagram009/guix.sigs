@@ -117,7 +117,7 @@ fn test_check() {
     );
     assert_eq!(
         check("A 22.0/user/all.SHA256SUMS\nA 22.0/user/all.SHA256SUMS.ask").unwrap_err(),
-        "Added unknown file '22.0/user/all.SHA256SUMS.ask'"
+        "Touched unknown file '22.0/user/all.SHA256SUMS.ask'"
     );
     assert_eq!(
         check("A 22.0/user/all.SHA256SUMS").unwrap_err(),
