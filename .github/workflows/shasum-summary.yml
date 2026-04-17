@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
   comment-summary:
     runs-on: ubuntu-slim
@@ -13,14 +16,20 @@ jobs:
         with:
           fetch-depth: 0
       - name: show changed files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          git diff --no-commit-id --name-only ${{ github.event.pull_request.base.sha }}..HEAD
+          git diff --no-commit-id --name-only "$BASE_SHA"..HEAD
       - name: run shasum-summary
-        run: python3 contrib/shasum-summary/main.py ${{ github.event.pull_request.base.sha }}..HEAD > comment
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 contrib/shasum-summary/main.py "$BASE_SHA"..HEAD > comment
       - name: show comment
         run: cat comment
       - name: Store issue number
-        run: echo "${{ github.event.number }}" > issue-number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: echo "$PR_NUMBER" > issue-number
       - name: Verify issue number file
         run: cat issue-number
       - uses: actions/upload-artifact@v7
